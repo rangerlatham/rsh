@@ -1,10 +1,14 @@
+extern crate termion;
+
+use termion::{clear, cursor};
 use std::io::{self, Write};
-//use std::fs;
 use std::env;
 use std::process::{Command, Stdio};
 use std::path::Path;
+//use std::fs;
 
 fn main() {
+    print!("{clear}{goto}",clear = clear::BeforeCursor, goto = cursor::Goto(1,1));
     loop{
 
         let _ = io::stdout().write(b"write your input:");
