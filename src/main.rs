@@ -10,24 +10,48 @@ use std::process::{Command, Stdio};
 use std::path::Path;
 //use std::fs;
 
+struct Cursor{
+    x: u16,
+    y: u16,
+}
+
 fn main() {
+    //clear screen, set up terminal
+    let prompt = String::from("write your input:");
     print!("{clear}{goto}",clear = clear::BeforeCursor, goto = cursor::Goto(1,1));
     let mut stdout = io::stdout().into_raw_mode().unwrap();
-    loop{
+    let mut cursor = Cursor{x:prompt.chars().count() as u16,y:1};
 
-        //let _ = io::stdout().write(b"write your input:");
-        //let _ = io::stdout().flush();
+    loop{
         let mut input = String::new();
-        write!(stdout,"write your input:").unwrap();
+        write!(stdout,"{}",prompt).unwrap();
         stdout.flush().unwrap();
+
         for c in io::stdin().keys(){
             match c.unwrap(){
                 Key::Char('\t') => print!("tab"),
-                Key::Char('\n') => print!("return"),
-                Key::Backspace => print!("backspace"),
+                Key::Char('\n') =>{
+                    cursor.x=prompt.chars().count() as u16;
+                    break;
+                },
+                Key::Backspace => {
+                    if cursor.x >=18{
+                        cursor.x-=1;
+                        input.pop();
+                        print!("{goleft}{erase}",
+                            goleft = cursor::Left(1), erase = clear::UntilNewline);
+                    }
+                },
+                Key::Ctrl('l') => print!("{clear}{goto}{prompt}",
+                    clear = clear::BeforeCursor, goto = cursor::Goto(1,1),prompt = prompt),
                 Key::Up => print!("up"),
                 Key::Esc => print!("esc"),
-                Key::Char(c) => print!("{}",c),
+                Key::Char(c) => {
+                    cursor.x+=1;
+                    let c2: char = c;
+                    print!("{}",c2);
+                    input.push(c);
+                },
                 Key::Ctrl('c') => return,
                 Key::Alt(c) => print!("Alt+{}",c),
                 Key::Ctrl(c) => print!("Ctrl+{}",c),
@@ -35,12 +59,15 @@ fn main() {
             }
             stdout.flush().unwrap();
         }
-        //io::stdin().read_line(&mut input).unwrap(); //TODO: ERROR HANDLING
 
-        //let input: Vec<&str> = input.trim().split(" ").collect(); //TODO: ERROR HANDLING
-        //if execute(input[0],input[1..].to_vec()) == 1{
-            //break; //TODO: deal with errors/exit codes
-        //}
+        print!("\n\r");
+        stdout.flush().unwrap();
+
+        let input: Vec<&str> = input.trim().split(" ").collect(); //TODO: ERROR HANDLING
+        if execute(input[0],input[1..].to_vec()) == 1{
+            break; //TODO: deal with errors/exit codes
+        }
+        print!("\r");
     }
 }
 
