@@ -1,6 +1,9 @@
 extern crate termion;
 
 use termion::{clear, cursor};
+use termion::raw::IntoRawMode;
+use termion::event::Key;
+use termion::input::TermRead;
 use std::io::{self, Write};
 use std::env;
 use std::process::{Command, Stdio};
@@ -9,17 +12,35 @@ use std::path::Path;
 
 fn main() {
     print!("{clear}{goto}",clear = clear::BeforeCursor, goto = cursor::Goto(1,1));
+    let mut stdout = io::stdout().into_raw_mode().unwrap();
     loop{
 
-        let _ = io::stdout().write(b"write your input:");
-        let _ = io::stdout().flush();
+        //let _ = io::stdout().write(b"write your input:");
+        //let _ = io::stdout().flush();
         let mut input = String::new();
-        io::stdin().read_line(&mut input).unwrap(); //TODO: ERROR HANDLING
-
-        let input: Vec<&str> = input.trim().split(" ").collect(); //TODO: ERROR HANDLING
-        if execute(input[0],input[1..].to_vec()) == 1{
-            break; //TODO: deal with errors/exit codes
+        write!(stdout,"write your input:").unwrap();
+        stdout.flush().unwrap();
+        for c in io::stdin().keys(){
+            match c.unwrap(){
+                Key::Char('\t') => print!("tab"),
+                Key::Char('\n') => print!("return"),
+                Key::Backspace => print!("backspace"),
+                Key::Up => print!("up"),
+                Key::Esc => print!("esc"),
+                Key::Char(c) => print!("{}",c),
+                Key::Ctrl('c') => return,
+                Key::Alt(c) => print!("Alt+{}",c),
+                Key::Ctrl(c) => print!("Ctrl+{}",c),
+                _ => print!("other"),
+            }
+            stdout.flush().unwrap();
         }
+        //io::stdin().read_line(&mut input).unwrap(); //TODO: ERROR HANDLING
+
+        //let input: Vec<&str> = input.trim().split(" ").collect(); //TODO: ERROR HANDLING
+        //if execute(input[0],input[1..].to_vec()) == 1{
+            //break; //TODO: deal with errors/exit codes
+        //}
     }
 }
 
